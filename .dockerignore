@@ -1,6 +1,4 @@
-.*
-!.gitignore
-
-!.dockerignore
+.git
+misc
 service_account.json
 receiver-config.yml

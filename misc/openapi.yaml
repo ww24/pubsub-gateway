@@ -1,0 +1,74 @@
+swagger: "2.0"
+info:
+  title: Pub/Sub Gataway
+  description: Pub/Sub Gateway Service
+  version: 1.0.0
+host: $CLOUD_RUN_HOSTNAME
+x-google-endpoints:
+  - name: $CLOUD_RUN_HOSTNAME
+    allowCors: True
+schemes:
+  - https
+produces:
+  - application/json
+x-google-backend:
+  address: https://$BACKEND_HOST_NAME
+paths:
+  /:
+    get:
+      operationId: get_default
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            type: string
+    options:
+      operationId: options_default
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            type: string
+      security: []
+  /publish:
+    post:
+      summary: Publish Pub/Sub event
+      operationId: post_publish
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            type: string
+    options:
+      operationId: options_publish
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            type: string
+      security: []
+  /webhook:
+    post:
+      summary: Publish Pub/Sub event
+      operationId: post_webhook
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            type: string
+      security:
+        - api_key: []
+security:
+  - google_id_token: []
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "key"
+    in: "query"
+  google_id_token:
+    authorizationUrl: ""
+    flow: "implicit"
+    type: "oauth2"
+    x-google-issuer: "accounts.google.com"
+    x-google-jwks_uri: "https://www.googleapis.com/oauth2/v3/certs"
+    x-google-audiences: "$OAUTH_CLIENT_ID"
