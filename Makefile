@@ -6,6 +6,10 @@ DEFAULT_ORIGIN ?=
 ALLOW_ORIGIN_SUFFIX ?=
 IMAGE := asia.gcr.io/${PROJECT_ID}/pubsub-gateway:latest
 
+BIN := $(abspath ./bin)
+GO ?= go
+GO_ENV ?= GOBIN=$(BIN)
+
 .PHONY: build
 build:
 	docker build -t ${IMAGE} .
@@ -35,3 +39,7 @@ deploy: flags
 	--service-account=${CLOUD_RUN_SERVICE_ACCOUNT_EMAIL} \
 	--no-allow-unauthenticated \
 	--flags-file .flags.yml
+
+.PHONY: generate
+generate:
+	PATH=$(BIN):${PATH} $(GO_ENV) $(GO) generate ./...

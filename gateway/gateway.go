@@ -20,7 +20,6 @@ var (
 
 type gateway struct {
 	topic             *pubsub.Topic
-	topicName         string
 	defaultOrigin     string
 	allowOriginSuffix string
 }
