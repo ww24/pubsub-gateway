@@ -9,6 +9,6 @@ services:
     environment:
       TZ: Asia/Tokyo
       MODE: receiver
-      CONFIG: ${CONFIG}
-      SERVICE_ACCOUNT: ${SERVICE_ACCOUNT}
+      CONFIG_YAML: ${CONFIG_YAML}
+      SERVICE_ACCOUNT_JSON: ${SERVICE_ACCOUNT_JSON}
     restart: always
