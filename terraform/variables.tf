@@ -40,7 +40,7 @@ variable "service_account" {
 // application environments
 variable "mode" {
   type    = string
-  default = "receiver"
+  default = "gateway"
 }
 
 variable "config_yaml" {

@@ -15,4 +15,8 @@ resource "google_pubsub_subscription" "remocon" {
   message_retention_duration = "600s"
   ack_deadline_seconds       = 10
   enable_message_ordering    = true
+
+  expiration_policy {
+    ttl = ""
+  }
 }
