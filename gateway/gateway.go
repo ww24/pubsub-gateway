@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -77,7 +77,7 @@ func (g *gateway) publishHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		sendError(w, r, errors.New("server error"))
 		log.Println("Failed to read body", err)
