@@ -1,5 +1,3 @@
-// +build cloudrun
-
 package main
 
 import (
@@ -7,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ww24/pubsub-gateway/gateway"
+	"github.com/ww24/pubsub-gateway/internal/config"
 	"github.com/ww24/pubsub-gateway/receiver"
 )
 
@@ -27,7 +27,8 @@ const (
 var (
 	port     = os.Getenv("PORT")
 	mode     = os.Getenv("MODE")
-	confFile = flag.String("config", "", "set path to config (required for receiver mode)")
+	confYaml = os.Getenv("CONFIG_YAML")
+	confFile = flag.String("config", "", "set path to config (for receiver mode)")
 )
 
 func main() {
@@ -39,8 +40,8 @@ func main() {
 		mode = defaultMode
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+	defer stop()
 
 	var closeFn func(context.Context)
 	if mode == "" {
@@ -54,11 +55,11 @@ func main() {
 		closeFn = receiverMode(ctx)
 	}
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
-	<-sigCh
+	// wait signal
+	<-ctx.Done()
+	stop()
 
-	ctx, cancel = context.WithTimeout(context.Background(), shutdownTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 	closeFn(ctx)
 }
@@ -84,15 +85,30 @@ func gatewayMode(ctx context.Context, port string) func(context.Context) {
 }
 
 func receiverMode(ctx context.Context) func(context.Context) {
-	if *confFile == "" {
-		fmt.Fprintln(os.Stderr, "-config flag is required")
+	var confData []byte
+	if *confFile != "" {
+		f, err := os.Open(*confFile)
+		if err != nil {
+			log.Fatalln("failed to open config file:", err)
+		}
+		defer f.Close()
+		confData, err = io.ReadAll(f)
+		if err != nil {
+			log.Fatalln("failed to load config file:", err)
+		}
+	} else {
+		confData = []byte(confYaml)
+	}
+
+	if confData == nil {
+		fmt.Fprintln(os.Stderr, "either -config flag or CONFIG_YAML env is required")
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
-	config, err := receiver.Parse(*confFile)
+	cfg, err := config.Parse(confData)
 	if err != nil {
 		cancel()
 		log.Fatalln("failed to load config:", err)
@@ -104,7 +120,7 @@ func receiverMode(ctx context.Context) func(context.Context) {
 		log.Fatalln("failed initialize receiver:", err)
 		return func(context.Context) {}
 	}
-	for _, handler := range config.Handlers {
+	for _, handler := range cfg.Handlers {
 		fmt.Println("subscription:", handler.Subscription)
 		handler := handler
 		go func() {
@@ -119,7 +135,7 @@ func receiverMode(ctx context.Context) func(context.Context) {
 				var action receiver.Executable
 				var payload []byte
 				switch handler.Action.Type {
-				case receiver.ActionHTTP:
+				case config.ActionHTTP:
 					a := handler.Action.HTTPRequestAction
 					action = receiver.NewHTTPAction(a.Header, a.Method, a.URL)
 					var err error

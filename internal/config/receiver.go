@@ -1,17 +1,19 @@
-package receiver
+package config
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"text/template"
 
 	"github.com/tidwall/gjson"
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	ErrInvalidActionType = errors.New("invalid action type")
 )
 
 // Config represents a config.yml.
@@ -35,6 +37,20 @@ const (
 	// ActionHTTP is action type for HTTP action.
 	ActionHTTP ActionType = "http"
 )
+
+// Validate validates action type.
+func (t ActionType) Validate() error {
+	switch t {
+	case ActionHTTP:
+		return nil
+
+	case ActionNone:
+		return ErrInvalidActionType
+
+	default:
+		return ErrInvalidActionType
+	}
+}
 
 // Action is action definition.
 type Action struct {
@@ -107,28 +123,20 @@ func (t *yamlTemplate) RenderJSON(jsonData []byte) ([]byte, error) {
 }
 
 // Parse parses config file and returns config data.
-func Parse(configPath string) (Config, error) {
-	f, err := os.Open(configPath)
-	if err != nil {
-		return Config{}, err
-	}
-	defer f.Close()
-	cnf, err := ioutil.ReadAll(f)
-	if err != nil {
-		return Config{}, err
-	}
+func Parse(data []byte) (Config, error) {
 	config := Config{}
-	if err := yaml.Unmarshal(cnf, &config); err != nil {
+	if err := yaml.Unmarshal(data, &config); err != nil {
 		return Config{}, err
 	}
-	if err := config.validate(); err != nil {
+	if err := config.Validate(); err != nil {
 		return Config{}, fmt.Errorf("validation error: %w", err)
 	}
 
 	return config, nil
 }
 
-func (c *Config) validate() error {
+// Validate validates config.
+func (c *Config) Validate() error {
 	if c.Version == "" {
 		return errors.New("version is required")
 	}
@@ -139,11 +147,8 @@ func (c *Config) validate() error {
 		if a.Subscription == "" {
 			return errors.New("subscription should be defined")
 		}
-		switch a.Action.Type {
-		case ActionHTTP:
-		case ActionNone:
-		default:
-			return fmt.Errorf("unsupported action type: %s", a.Action.Type)
+		if err := a.Action.Type.Validate(); err != nil {
+			return fmt.Errorf("action type validation failed: %w", err)
 		}
 	}
 	return nil

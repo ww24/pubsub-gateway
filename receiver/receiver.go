@@ -7,6 +7,7 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 )
 
 // Subscriber provides pubsub subscriber.
@@ -20,18 +21,22 @@ type receiver struct {
 
 // New returns Subscriber.
 func New(ctx context.Context) (Subscriber, error) {
-	cred, err := google.FindDefaultCredentials(ctx)
+	var cred *google.Credentials
+	var err error
+	if data := os.Getenv("SERVICE_ACCOUNT_JSON"); data != "" {
+		cred, err = google.CredentialsFromJSON(ctx, []byte(data), pubsub.ScopePubSub)
+	} else {
+		cred, err = google.FindDefaultCredentials(ctx, pubsub.ScopePubSub)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("credential error: %w", err)
 	}
-	projectID := cred.ProjectID
-	if projectID == "" {
-		projectID = os.Getenv("PROJECT_ID")
-	}
-	cli, err := pubsub.NewClient(ctx, projectID)
+
+	cli, err := pubsub.NewClient(ctx, cred.ProjectID, option.WithCredentials(cred))
 	if err != nil {
 		return nil, fmt.Errorf("pubsub new client error: %w", err)
 	}
+
 	return &receiver{
 		cli: cli,
 	}, nil
