@@ -43,3 +43,7 @@ deploy: flags
 .PHONY: generate
 generate:
 	PATH=$(BIN):${PATH} $(GO_ENV) $(GO) generate ./...
+
+.PHONY: lint
+lint:
+	golangci-lint run
