@@ -51,11 +51,17 @@ jobs:
       - name: Test
         run: go test -v -race ./...
 
-  docker_build_test:
+  docker_build:
     name: Build docker image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
       - name: Lint
         run: |
           docker run -v $(pwd):/working --rm hadolint/hadolint \
@@ -85,8 +91,8 @@ jobs:
           sarif_file: trivy-results.sarif
 
   docker_push:
-    if: ${{ github.event_name == 'push' }}
-    needs: [lint, test, docker_build_test]
+    if: github.event_name == 'push'
+    needs: [lint, test, docker_build]
     name: Build and push docker image
     runs-on: ubuntu-latest
     steps:
@@ -97,6 +103,8 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
+      - name: Setup docker buildx
+        uses: docker/setup-buildx-action@v1
       - name: Login to Docker Hub
         uses: docker/login-action@v1
         with:
@@ -108,8 +116,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_TOKEN }}
-      - name: Setup docker buildx
-        uses: docker/setup-buildx-action@v1
       - name: Build and push docker image
         uses: docker/build-push-action@v2
         with:
@@ -121,3 +127,28 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
             ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}
+
+  terraform:
+    name: Terraform
+    defaults:
+      run:
+        working-directory: terraform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.15.1
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - name: Fmt
+        run: terraform fmt -check
+      - name: Init
+        run: terraform init
+      - name: Validate
+        run: terraform validate -no-color
+      - name: Plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color
+      - name: Apply
+        if: github.event_name == 'push'
+        run: terraform apply -no-color
