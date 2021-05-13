@@ -18,7 +18,7 @@ resource "google_cloud_run_service" "gateway" {
     spec {
       service_account_name = var.service_account
 
-      timeout_seconds = 15
+      timeout_seconds = var.timeout
       containers {
         image = local.image
 

@@ -37,6 +37,24 @@ variable "service_account" {
   type = string
 }
 
+variable "timeout" {
+  type    = number
+  default = 15
+}
+
+// iap
+variable "oauth_client_id" {
+  type = string
+}
+
+variable "oauth_client_secret" {
+  type = string
+}
+
+variable "domains" {
+  type = list(string)
+}
+
 // application environments
 variable "mode" {
   type    = string
