@@ -51,8 +51,8 @@ variable "oauth_client_secret" {
   type = string
 }
 
-variable "domains" {
-  type = list(string)
+variable "cert" {
+  type = string
 }
 
 // application environments
