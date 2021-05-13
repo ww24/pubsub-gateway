@@ -11,20 +11,26 @@ resource "google_compute_region_network_endpoint_group" "gateway" {
   }
 }
 
+# Create Cert manually
+# https://console.cloud.google.com/net-services/loadbalancing/advanced/sslCertificates/list
+data "google_compute_ssl_certificate" "default" {
+  name = var.cert
+}
+
 module "gateway_lb" {
   source  = "GoogleCloudPlatform/lb-http/google//modules/serverless_negs"
   version = "~> 5.0"
 
-  project                         = var.project
-  name                            = var.name
-  address                         = google_compute_global_address.gateway.self_link
-  create_address                  = false
-  cdn                             = false
-  ssl                             = true
-  use_ssl_certificates            = false
-  managed_ssl_certificate_domains = var.domains
-  https_redirect                  = true
-  quic                            = true
+  project              = var.project
+  name                 = var.name
+  address              = google_compute_global_address.gateway.self_link
+  create_address       = false
+  cdn                  = false
+  ssl                  = true
+  use_ssl_certificates = true
+  ssl_certificates     = [data.google_compute_ssl_certificate.default.self_link]
+  https_redirect       = true
+  quic                 = true
 
   backends = {
     default = {
