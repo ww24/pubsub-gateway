@@ -1,4 +1,7 @@
 resource "google_compute_global_address" "gateway" {
+  # disable
+  count = 0
+
   name = "${var.name}-address"
 }
 
@@ -18,12 +21,15 @@ data "google_compute_ssl_certificate" "default" {
 }
 
 module "gateway_lb" {
+  # disable
+  count = 0
+  #address = google_compute_global_address.gateway.self_link
+
   source  = "GoogleCloudPlatform/lb-http/google//modules/serverless_negs"
   version = "~> 5.0"
 
   project              = var.project
   name                 = var.name
-  address              = google_compute_global_address.gateway.self_link
   create_address       = false
   cdn                  = false
   ssl                  = true
