@@ -65,8 +65,8 @@ resource "google_cloud_run_service" "gateway" {
       annotations = {
         "autoscaling.knative.dev/maxScale" = "1"
 
-        # not working (2021/05/12)
-        "run.googleapis.com/ingress" = "internal-and-cloud-load-balancing"
+        # not working (2021/05/27)
+        "run.googleapis.com/ingress" = "all"
       }
 
       labels = {
