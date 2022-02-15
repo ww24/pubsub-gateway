@@ -3,8 +3,7 @@ module github.com/ww24/pubsub-gateway
 go 1.16
 
 require (
-	cloud.google.com/go/iam v0.1.0 // indirect
-	cloud.google.com/go/pubsub v1.17.1
+	cloud.google.com/go/pubsub v1.18.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.14.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
