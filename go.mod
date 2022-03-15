@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/pubsub v1.18.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.14.0
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
-	google.golang.org/api v0.70.0
+	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a
+	google.golang.org/api v0.72.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
