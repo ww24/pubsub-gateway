@@ -7,6 +7,6 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/tidwall/gjson v1.14.0
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a
-	google.golang.org/api v0.73.0
+	google.golang.org/api v0.74.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
